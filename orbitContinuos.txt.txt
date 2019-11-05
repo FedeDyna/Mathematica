@@ -1,0 +1,44 @@
+Needs["DifferentialEquations`NDSolveProblems`"];
+Needs["DifferentialEquations`NDSolveUtilities`"];
+Clear[Omega, r1, r2, X, Y, mu, Vx, Vy]
+
+Omega = (1/2) ((1 - mu) r1^2 + mu r2^2) + mu/r2 + (1 - mu)/r1;
+
+r1 = ((X[t] - mu)^2 + Y[t]^2)^(1/2);
+r2 = ((X[t] + 1 - mu)^2 + Y[t]^2)^(1/2);
+
+VxEquation = Simplify[
+   	D[Vx[t], t] - 2 Vy[t] - D[Omega, X[t]]];
+VyEquation = Simplify[
+   	D[Vy[t], t] + 2 Vx[t] - D[Omega, Y[t]]];
+xEquation = D[X[t], t] - Vx[t];
+yEquation = D[Y[t], t] - Vy[t];
+
+Clear[X, Y, Vx, Vy]
+
+mu = 0.001;
+
+InitialConditions = {X[0] == 0.49, Vx[0] == 0., Y[0] == Sqrt[3]/2, 
+   Vy[0] == 0.};
+
+EquationList = Join[
+       {VxEquation == 0}, {VyEquation == 0},
+   	{xEquation == 0}, {yEquation == 0},
+   	InitialConditions];
+tin = 0.;
+tfin = 120;
+
+Orbit = NDSolve[
+   EquationList, {X[t], Y[t], Vx[t], Vy[t]}, {t, tin, tfin},
+       Method -> {"ExplicitRungeKutta", "DifferenceOrder" -> 9}, 
+      (* WorkingPrecision -> 32,*)MaxSteps -> 50000];
+
+X[t_] = First[X[t] /. Orbit];
+Y[t_] = First[Y[t] /. Orbit];
+Vx[t_] = First[Vx[t] /. Orbit];
+Vy[t_] = First[Vy[t] /. Orbit];
+
+r = ParametricPlot[{X[t], Y[t]}, {t, tin, tfin},
+  	AspectRatio -> Automatic, PlotPoints -> 100,
+  Epilog -> {AbsolutePointSize[7],
+    Point[{mu - 1, 0}], Point[{mu, 0}]}]
